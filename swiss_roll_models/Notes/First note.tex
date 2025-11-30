@@ -1,1 +1,304 @@
-\td
+% !TeX program = pdflatex
+\documentclass[11pt]{article}
+
+% ============ 基本排版设置 ============
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ============ 数学包 ============
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}          % 粗体数学符号
+\usepackage{bbm}         % \mathbbm{1} 指示函数
+\usepackage{mathrsfs}    % 花体字母 \mathscr
+
+% ============ 图表包 ============
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+
+% ============ 颜色 & 超链接 ============
+\usepackage{xcolor}
+\definecolor{linkcolor}{RGB}{0,0,120}
+\usepackage[
+  colorlinks=true,
+  linkcolor=linkcolor,
+  citecolor=linkcolor,
+  urlcolor=linkcolor
+]{hyperref}
+\usepackage[nameinlink]{cleveref}  % 智能引用 \Cref
+
+% ============ 参考文献（简单版） ============
+% 如果之后要用 biblatex，可以再自己改
+\usepackage[numbers,sort&compress]{natbib}
+
+% ============ 环境定义 ============
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+% ============ 常用宏命令 ============
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+
+\newcommand{\cone}{\mathcal{C}}          % 正锥
+\newcommand{\Hil}{d_{\mathrm{H}}}        % Hilbert 度量
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+
+% 方便写“约等于”的符号
+\newcommand{\approxsim}{\mathrel{\raisebox{0.2ex}{\text{$\scriptstyle\sim$}}}}
+
+% ============ 文档开始 ============
+\begin{document}
+
+% ---------- 标题区（这里按需要改） ----------
+\title{A Preliminary Note on Hilbert Projective Geometry in Gradient-Based Learning Dynamics}
+\author{Xinyang (Elizabeth) Wen}
+\date{}  % 空日期，如果想要日期就删掉这一行
+
+\maketitle
+
+% ---------- 摘要 ----------
+\begin{abstract}
+% TODO: 在这里写一个 5--8 行的摘要，简要说明：
+% 1. 你研究的对象：gradient descent / gradient flow 在正锥中的轨迹；
+% 2. 你用的工具：Hilbert projective metric / positive cone dynamics；
+% 3. 你观察到的现象：大部分训练阶段 Hilbert 距离几乎保持常数，末期突然收缩；
+% 4. 你推测与 Perron--Frobenius / cone-contraction 理论的关系；
+% 5. 强调这是 preliminary empirical / conceptual note。
+This short note reports some preliminary observations on gradient-based learning dynamics viewed through the projective geometry of a positive cone. For simple models with a nonnegative parametrisation, the parameter trajectory remains in the interior of the cone and can be monitored using Hilbert's projective metric. Empirically, we observe that the Hilbert distance to the final parameter remains almost constant for most of training, followed by a sharp collapse near convergence. This behaviour resembles a Perron--Frobenius type contraction in projective metric. We briefly describe the setup, the empirical phenomena, and some speculative connections to nonlinear Perron--Frobenius theory and Birkhoff-type contraction results.
+\end{abstract}
+
+% 可以选一个小的引言节标题或者直接进入 Section 1
+
+% ---------- 1. Introduction / Motivation ----------
+\section{Introduction}
+
+% TODO: 这一节建议 0.5--1 页，不要太长。
+% 建议内容：
+% - 用非技术性但数学友好的语言说明：
+%   * gradient-based learning dynamics 通常在参数空间里分析；
+%   * 如果参数被限制在正锥中，就可以引入 Hilbert projective metric；
+%   * Perron--Frobenius 理论告诉我们：正映射在 Hilbert 度量下具有收缩性；
+%   * 本 note 的目的是给出一个“现象级”的观察 + 一点解释性猜想。
+%
+% 可以顺便引用一两篇你知道的文献（等你决定好以后再在参考文献里加）
+
+Modern gradient-based learning algorithms are typically analysed in Euclidean parameter spaces. In many settings, however, it is natural or convenient to enforce a positivity structure on the parameters, either explicitly (e.g.\ nonnegative factorisations) or implicitly (e.g.\ via nonnegative activations and reparametrisations). In such cases, the parameter trajectory lives in the interior of a positive cone, and one can ask whether a projective, rather than purely Euclidean, viewpoint is more appropriate.
+
+Hilbert's projective metric provides a natural geometry on the projectivisation of a cone. In the context of positive linear and nonlinear operators, the Birkhoff--Bushell theory shows that order-preserving homogeneous maps often act as strict contractions in this metric, leading to Perron--Frobenius type asymptotics.
+
+The goal of this note is to report a simple but robust empirical phenomenon: when monitoring the parameter trajectory of a gradient-based learning procedure in Hilbert's projective metric, we observe a characteristic ``plateau-and-collapse'' behaviour of the distance to the final parameter. This pattern suggests a qualitative similarity with Perron--Frobenius--type contraction on a cone. We do not attempt any rigorous analysis here, but instead outline the setup, the observations, and some possible interpretations.
+
+% ---------- 2. Setup: Gradient Dynamics in a Positive Cone ----------
+\section{Setup: Gradient Dynamics in a Positive Cone}
+
+% TODO: 这一节里给出最简但清晰的模型：
+% - 例子：一个简单的线性模型 / 一层网络 / last layer weights；
+% - 参数 w_t \in \R^n_{>0}，正性通过 softplus / exponential reparam 实现；
+% - 梯度下降或连续时间的 gradient flow；
+% - 简要说明为什么轨迹会 stay in the cone。
+
+\subsection{Model and parametrisation}
+
+Let $\cone \subset \R^n$ denote the standard positive cone
+\[
+  \cone := \{x \in \R^n : x_i > 0 \text{ for all } i\}.
+\]
+We consider a parametrised model $f_w$ with parameter $w \in \cone$.
+In practice, one may obtain $w \in \cone$ either by an explicit nonnegative constraint or via a reparametrisation such as
+\[
+  w = \phi(\theta), \qquad \phi: \R^n \to \cone,
+\]
+where $\phi$ is, for instance, a componentwise softplus or exponential map.
+
+Given a loss function $L(w)$ defined on $\cone$, we study (discrete-time) gradient descent
+\begin{equation}
+  w_{t+1} = w_t - \eta_t \nabla L(w_t),
+  \label{eq:gd}
+\end{equation}
+or, in a continuous-time approximation,
+\begin{equation}
+  \dot{w}_t = -\nabla L(w_t).
+  \label{eq:gf}
+\end{equation}
+For sufficiently small stepsizes and suitable regularity assumptions, the trajectory $(w_t)_t$ remains in $\cone$ for all relevant times. In what follows, we assume that $(w_t)_{t \ge 0} \subset \cone$ and that a limiting point $w^\ast \in \cone$ is reached (or very closely approximated) in the course of training.
+
+\subsection{Projective viewpoint}
+
+Since $\cone$ is invariant under positive scalar multiplication, it is natural to identify parameters that differ only by a positive scaling factor. That is, we consider the projective space of rays in $\cone$,
+\[
+  [x] = \{\alpha x : \alpha > 0\}, \qquad x \in \cone,
+\]
+and view the parameter trajectory in terms of its changing projective direction rather than its Euclidean location. Hilbert's projective metric provides a canonical way of quantifying the relative position of two rays.
+
+% ---------- 3. Hilbert's Projective Metric ----------
+\section{Hilbert's Projective Metric}
+
+% TODO: 在这里给出 Hilbert 度量的定义 + 最基本性质：
+% - 尺度不变；
+% - 正锥内部定义；
+% - 提到 Birkhoff 收缩但不用详细证明。
+
+\begin{definition}[Hilbert projective metric]
+For $x,y \in \cone$, define
+\[
+  M(x,y) := \max_{1 \le i \le n} \frac{x_i}{y_i}, 
+  \qquad
+  m(x,y) := \min_{1 \le i \le n} \frac{x_i}{y_i},
+\]
+and set
+\[
+  \Hil(x,y) := \log \frac{M(x,y)}{m(x,y)}.
+\]
+\end{definition}
+
+The quantity $\Hil(x,y)$ is invariant under positive rescaling of either argument:
+\[
+  \Hil(\alpha x, \beta y) = \Hil(x,y) \quad \text{for all } \alpha,\beta > 0,
+\]
+and thus descends to a well-defined metric on the projective space of rays in $\cone$. Geometrically, $\Hil(x,y)$ measures the logarithmic spread of the coordinatewise ratios $x_i/y_i$ and can be interpreted as a notion of ``projective angle'' between the two rays.
+
+In the theory of positive linear and nonlinear operators, an order-preserving homogeneous map $T : \cone \to \cone$ often acts as a contraction with respect to $\Hil$, with a contraction coefficient that can be bounded in terms of the projective diameter of the image of $\cone$ under $T$. This underlies many versions of Perron--Frobenius theory and the convergence of iterates of $T$ to a dominant eigenvector or eigenray.
+
+In contrast, gradient descent updates of the form \eqref{eq:gd} are not homogeneous and are not a priori order-preserving. Nonetheless, as we describe below, the \emph{late-stage} behaviour of \eqref{eq:gd}, when monitored in the metric $\Hil(\cdot,\cdot)$, exhibits a pattern reminiscent of a Perron--Frobenius type contraction.
+
+% ---------- 4. Empirical Observations ----------
+\section{Empirical Observations on Gradient-Based Learning}
+
+% TODO: 这一节就是你最重要的“实验现象”总结。
+% 可以分成小节：
+%   4.1 Experimental setup
+%   4.2 Distance to final parameter
+%   4.3 Plateau-and-collapse pattern
+
+\subsection{Experimental setup}
+
+% TODO: 简要描述你用的模型：
+% - 比如：MNIST, last layer weights, cross-entropy + softplus；
+% - 训练细节可以非常简略，只写和正锥 / Hilbert 相关的部分。
+We illustrate the above viewpoint on a simple supervised learning task.
+For concreteness, consider a feedforward neural network trained on a classification problem such as MNIST, and focus on the last-layer weight vector $w_t \in \cone \subset \R^n$. The network is trained by stochastic gradient descent with cross-entropy loss, and the last-layer parametrisation is chosen so that $w_t$ remains strictly positive.
+
+At each optimisation step, we record $w_t$ and, after training, we estimate a ``final'' parameter $w^\ast$ (for instance, the last iterate or a running average over the last few iterates). We then compute the Hilbert distances
+\[
+  \Hil(w_t, w^\ast), \qquad t = 0,1,\dots,T,
+\]
+and, when convenient, also the stepwise ratios
+\[
+  r_t := \frac{\Hil(w_{t+1}, w^\ast)}{\Hil(w_t, w^\ast)}.
+\]
+
+% 如果你有图，这里可以插入图的占位符
+\begin{figure}[t]
+  \centering
+  % TODO: 把你的图片文件名填进去，例如 hilbert_to_final.pdf
+  \includegraphics[width=0.65\textwidth]{hilbert_to_final_placeholder.pdf}
+  \caption{Placeholder: evolution of $\Hil(w_t, w^\ast)$ during training. 
+  % TODO: 把 caption 写成你真实的现象描述。
+  }
+  \label{fig:hilbert_to_final}
+\end{figure}
+
+\subsection{Plateau-and-collapse behaviour}
+
+% TODO: 在这里用语言描述最关键的现象：
+% - 中期 Hilbert 距离基本不变（ratio 接近 1）；
+% - 末期突然下降；
+% - 这在多次实验、不同 seed、batch size 下都很稳健。
+
+A robust pattern across experiments is the following:
+\begin{itemize}
+  \item For a large portion of the training trajectory, $\Hil(w_t, w^\ast)$ remains nearly constant. The stepwise ratios $r_t$ fluctuate around $1$, indicating that there is very little projective contraction towards the final parameter.
+  \item Near the end of training, there is a relatively short phase in which $\Hil(w_t, w^\ast)$ collapses rapidly. In this regime, the ratios $r_t$ tend to be noticeably smaller than $1$, signalling a sharp contraction towards the final ray $[w^\ast]$.
+\end{itemize}
+
+This ``plateau-and-collapse'' behaviour appears to be stable across different random initialisations, batch sizes, and, to some extent, model architectures. While the Euclidean distance $\norm{w_t - w^\ast}$ typically decays more smoothly, the projective distance in Hilbert's metric makes the late-stage contraction much more pronounced.
+
+% TODO: 如果你有第二张图（例如 ratio_to_final），可以插这里：
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.65\textwidth]{ratio_to_final_placeholder.pdf}
+  \caption{Placeholder: stepwise ratio 
+  $r_t = \Hil(w_{t+1}, w^\ast) / \Hil(w_t, w^\ast)$,
+  illustrating an extended phase with $r_t \approx 1$ followed by a contraction phase with $r_t < 1$.
+  }
+  \label{fig:ratio_to_final}
+\end{figure}
+
+% ---------- 5. Interpretation and Connections to PF Theory ----------
+\section{Interpretation and Connections to Perron--Frobenius Theory}
+
+% TODO: 在这一节给出你的“猜想式解释”：
+% - 不是 rigorous theorem，而是 qualitative 对照：
+%   * 晚期的行为似乎像一个 positive homogeneous map 的迭代；
+%   * 最终方向像 PF eigenvector；
+%   * Hilbert 度量下的收缩则类似 Birkhoff coefficient < 1 的情形。
+
+The empirical findings above invite comparison with the classical picture of Perron--Frobenius theory for positive maps on cones. There, one typically studies an order-preserving, homogeneous map $T : \cone \to \cone$ whose iterates $T^k(x)$ converge projectively to a dominant eigenvector. Under suitable conditions, $T$ is a strict contraction in Hilbert's projective metric, and the projective distance to the attracting eigenray decays at an exponential rate.
+
+In the present setting, gradient descent \eqref{eq:gd} is neither homogeneous nor obviously order-preserving. Nevertheless, the observed projective dynamics suggest the following informal picture:
+\begin{itemize}
+  \item For most of training, the parameter trajectory explores a region of the cone where the effective dynamics in projective space are almost stationary: the direction $[w_t]$ drifts slowly, and $\Hil(w_t, w^\ast)$ remains nearly constant.
+  \item In the late stages, the dynamics enter a regime where the effective map from $w_t$ to $w_{t+1}$ behaves approximately like an order-preserving, cone-contracting transformation, leading to a rapid alignment of $[w_t]$ with the final ray $[w^\ast]$.
+\end{itemize}
+
+One speculative way to formalise this would be to regard the late-stage dynamics as governed by a family of maps $T_t$ on $\cone$ that are close, in an appropriate sense, to a limiting positive map $T$. If $T$ admits a Perron--Frobenius eigenvector and is a contraction in Hilbert's metric, then one might expect the projective component of $w_t$ to exhibit a PF-type asymptotic behaviour, while the early and middle stages reflect the non-contractive, transitory effects of the full gradient dynamics.
+
+We leave such considerations at the level of conjectural interpretation and focus, in this note, on the empirical pattern itself.
+
+% ---------- 6. Discussion and Future Work ----------
+\section{Discussion and Future Directions}
+
+% TODO: 这一节用来和 Francesco “open questions 对话”：
+% - 提出你觉得可以做 rigorous 的方向；
+% - 问：是否有 nonstationary / random maps on cones 的工具可以等价描述；
+% - 提出你对 nonlinear PF / cone contraction 在 gradient flow 中的设想。
+
+The observations in this note raise several natural questions:
+
+\begin{itemize}
+  \item Can the late-stage dynamics of gradient descent in a positive cone be approximated by an order-preserving, homogeneous (or asymptotically homogeneous) map, to which a form of Perron--Frobenius theory applies?
+  \item Is it possible to identify conditions under which the gradient flow \eqref{eq:gf} induces a contraction in Hilbert's projective metric on an invariant subset of $\cone$?
+  \item How robust is the observed plateau-and-collapse pattern across architectures, loss functions, and data distributions, and can it be linked to spectral properties of a suitably linearised or averaged operator?
+\end{itemize}
+
+These questions suggest a possible bridge between the geometry of optimisation trajectories in machine learning and the established theory of cone contractions and nonlinear Perron--Frobenius operators. A more systematic study of this connection, both analytically and experimentally, is left for future work.
+
+% ---------- 致谢（可选） ----------
+\section*{Acknowledgements}
+
+% TODO: 看你要不要写。可以简单写：
+% "I am grateful to Francesco Tudisco for encouragement and for pointing out related work."
+
+I am grateful to Francesco Tudisco for encouragement and for pointing out related work.
+
+% ---------- 参考文献 ----------
+\begin{thebibliography}{9}
+
+% TODO: 在这里手动添加参考文献，格式示例：
+\bibitem{Birkhoff}
+G.~Birkhoff.
+\newblock Extensions of {Jentzsch}'s theorem.
+\newblock \emph{Trans. Amer. Math. Soc.}, 85(1):219--227, 1957.
+
+\bibitem{Bushell}
+P.~J.~Bushell.
+\newblock Hilbert's metric and positive contraction mappings in a Banach space.
+\newblock \emph{Arch. Rational Mech. Anal.}, 52(4):330--338, 1973.
+
+% \bibitem{YourPFGradientPaper}
+% TODO: 把 Francesco 提到的那篇 “the only work in this direction” 填进来。
+
+\end{thebibliography}
+
+\end{document}

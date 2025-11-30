@@ -273,9 +273,8 @@ class HBModel_MNIST:
             "epochs_or_steps": f"steps{max_steps}" if max_steps is not None else f"ep{num_epochs}",
         }
 
-
+    @staticmethod
     def train_full_batch_with_hilbert(
-        self,
         model: nn.Module,
         images: torch.Tensor,
         labels: torch.Tensor,
@@ -385,9 +384,8 @@ class HBModel_MNIST:
 
         return {"model": model, "param_traj": param_traj, "lr": lr, "steps": len(param_traj) - 1}
 
-
+    @staticmethod
     def train_with_optional_initialization(
-        self,
         num_steps: int,
         if_initialize: bool,
         number_of_layerss: int = 1,
@@ -466,7 +464,7 @@ class HBModel_MNIST:
             labels_to_use = labels
             init_vector = initial_vector
 
-        result = self.train_full_batch_with_hilbert(
+        result = HBModel_MNIST.train_full_batch_with_hilbert(
             model=model_to_train,
             images=images_to_use,
             labels=labels_to_use,

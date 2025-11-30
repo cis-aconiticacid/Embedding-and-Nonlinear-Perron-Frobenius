@@ -68,12 +68,11 @@ def describe_segment(vals):
 
 def plot_hb(
     values=None,
-    *,
     if_smooth=True,
     smooth_window=50,
     max_points=1000,
-    if_plot=False,
     if_save=True,
+    plt_title="Hilbert Metric over Steps",
     saved_name="hilbert_plot.png",
     saved_path=".",
     if_show=False,
@@ -107,6 +106,7 @@ def plot_hb(
         plt.plot(x_axis, y_axis, linewidth=2)
     plt.xlabel("step t")
     plt.ylabel("Hilbert metric")
+    plt.title(plt_title)
     plt.axhline(1.0, linestyle="--", linewidth=1)
     plt.tight_layout()
 
@@ -115,7 +115,7 @@ def plot_hb(
         save_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_dir / saved_name)
 
-    if if_plot or if_show:
+    if if_show:
         plt.show()
 
     plt.close()
@@ -123,7 +123,6 @@ def plot_hb(
 
 def write_stats(
     values,
-    *,
     if_print=False,
     if_save=True,
     saved_name="hilbert_stats.txt",
@@ -187,21 +186,35 @@ def _hilbert_to_target_sequence(trajectory, w_star):
 def analysis_to_w_star(
     trajectory,
     w_star,
-    if_plot,
     if_writes,
-    *,
+    if_print,
+    if_smooth=True,
+    plt_title="Hilbert to w*",
+    if_show=False,
     if_save=True,
     save_name="analysis_to_w_star",
     saved_path=".",
-    if_show=False,
     if_masked=True,
     if_unmasked=True,
     threshold=1e-10,
 ):
-    """Analyze Hilbert distances between trajectory steps and ``w_star``.
-
-    Masking is applied relative to ``w_star`` via ``hc.mask_by_wstar_support``
-    when requested.
+    """
+    Args:
+        trajectory: List of parameter vectors along the trajectory.
+        w_star: Target parameter vector.
+        if_writes: Whether to write statistics to a text file.
+        if_print: Whether to print statistics to console.
+        if_smooth: Whether to smooth the plotted curve.
+        plt_title: Title for the plot.
+        if_show: Whether to show the plot.
+        if_save: Whether to save the plot and statistics.
+        save_name: Base name for saved files.
+        saved_path: Directory to save files.
+        if_masked: Whether to compute masked analysis.
+        if_unmasked: Whether to compute unmasked analysis.
+        threshold: Threshold for masking.
+    Returns:
+        dict_keys: hilbert_to_w_star, hilbert_to_w_star_masked, unmasked_stats, masked_stats
     """
 
     results = {}
@@ -212,12 +225,14 @@ def analysis_to_w_star(
         unmasked = _hilbert_to_target_sequence(trajectory, w_star)
         results["hilbert_to_w_star"] = unmasked
 
-        if if_plot:
+        if if_show:
             plot_hb(
                 unmasked,
                 saved_name=f"{save_name}_to_w_star.png",
                 saved_path=save_dir,
+                plt_title=f"{plt_title} (Unmasked)",
                 if_show=if_show,
+                if_smooth=if_smooth,
             )
 
         if if_writes:
@@ -225,6 +240,7 @@ def analysis_to_w_star(
                 unmasked,
                 saved_name=f"{save_name}_to_w_star_stats.txt",
                 saved_path=save_dir,
+                if_print=if_print,
             )
 
         if if_save:
@@ -239,12 +255,14 @@ def analysis_to_w_star(
         masked = _hilbert_to_target_sequence(masked_list, masked_w_star)
         results["hilbert_to_w_star_masked"] = masked
 
-        if if_plot:
+        if if_show:
             plot_hb(
                 masked,
                 saved_name=f"{save_name}_to_w_star_masked.png",
                 saved_path=save_dir,
+                plt_title=f"{plt_title} (Masked)",
                 if_show=if_show,
+                if_smooth=if_smooth,
             )
 
         if if_writes:
@@ -252,6 +270,7 @@ def analysis_to_w_star(
                 masked,
                 saved_name=f"{save_name}_to_w_star_masked_stats.txt",
                 saved_path=save_dir,
+                if_print=if_print,
             )
 
         if if_save:
@@ -267,9 +286,9 @@ def analysis_to_w_star(
 
 def analysis_to_w_between(
     trajectory,
-    if_plot,
     if_writes,
-    *,
+    if_print,
+    plt_title="Hilbert Between Steps",
     if_save=True,
     save_name="analysis_between",
     saved_path=".",
@@ -277,6 +296,7 @@ def analysis_to_w_between(
     threshold=1e-10,
     if_masked=True,
     if_self_adaptive=False,
+    if_smooth=True,
 ):
     """Analyze Hilbert distances between consecutive trajectory steps."""
 
@@ -293,19 +313,21 @@ def analysis_to_w_between(
     )
     results["hilbert_between"] = unmasked_between
 
-    if if_plot:
+    if if_show:
         plot_hb(
             unmasked_between,
             saved_name=f"{save_name}_between.png",
             saved_path=save_dir,
+            plt_title=f"{plt_title} (Unmasked)",
             if_show=if_show,
+            if_smooth=if_smooth,
         )
 
     if if_writes:
         results["unmasked_stats"] = write_stats(
             unmasked_between,
             saved_name=f"{save_name}_between_stats.txt",
-            saved_path=save_dir,
+            saved_path=save_dir,if_print=if_print,
         )
 
     if if_save:
@@ -322,12 +344,12 @@ def analysis_to_w_between(
         )
         results["hilbert_between_masked"] = masked_between
 
-        if if_plot:
+        if if_show:
             plot_hb(
                 masked_between,
                 saved_name=f"{save_name}_between_masked.png",
                 saved_path=save_dir,
-                if_show=if_show,
+                plt_title=f"{plt_title} (Masked)",
             )
 
         if if_writes:
@@ -335,6 +357,8 @@ def analysis_to_w_between(
                 masked_between,
                 saved_name=f"{save_name}_between_masked_stats.txt",
                 saved_path=save_dir,
+                if_print=if_print,
+                if_smooth=if_smooth,
             )
 
         if if_save:
@@ -357,6 +381,7 @@ def analysis(
     output_log,
     batch_size,
     lr,
+    plt_title="Hilbert Metric Analysis",
     path="./analysis_result",
     num_epochs=None,
     threshold=1e-3,
@@ -402,6 +427,7 @@ def analysis(
         if_show=False,
         threshold=threshold,
         if_masked=if_mask,
+        plt_title=plt_title,
     )
 
     # To w_star analysis
@@ -418,6 +444,7 @@ def analysis(
         if_masked=if_mask,
         if_unmasked=True,
         threshold=threshold,
+        plt_title=plt_title,
     )
 
     with open(text_path, "a", encoding="utf-8") as f:

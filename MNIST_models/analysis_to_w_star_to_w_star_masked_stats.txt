@@ -1,0 +1,16 @@
+===== Hilbert Metric Statistics =====
+
+The first 200 steps:
+  Mean ≈ 35.3943
+  Min ≈ 1.2954, Max ≈ 39.9621
+  Q25 ≈ 33.8292, Q75 ≈ 38.0587
+
+The 200 to 400 steps:
+  Mean ≈ 0.0000
+  Min ≈ 0.0000, Max ≈ 0.0000
+  Q25 ≈ 0.0000, Q75 ≈ 0.0000
+
+The last 200 steps:
+  Mean ≈ 35.1945
+  Min ≈ 0.0000, Max ≈ 39.9556
+  Q25 ≈ 33.7997, Q75 ≈ 38.0436
