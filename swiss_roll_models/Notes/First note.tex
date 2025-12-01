@@ -1,244 +1,181 @@
 \documentclass[11pt]{article}
 
-% ========= 基本包 =========
+% ===============================
+% Packages
+% ===============================
 \usepackage[margin=1in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{lmodern}
-\usepackage{amsmath, amssymb, amsthm, amsfonts}
+\usepackage{amsmath, amsthm, amssymb, amsfonts}
 \usepackage{mathtools}
-\usepackage{bm}
 \usepackage{enumitem}
-\usepackage{graphicx}
-\usepackage{xcolor}
 \usepackage{hyperref}
-\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{bm}
 \usepackage{microtype}
-
-% ========= 超链接样式 =========
+\usepackage{parskip}
+\usepackage{float}
 \hypersetup{
-  colorlinks=true,
-  linkcolor=blue!60!black,
-  citecolor=blue!60!black,
-  urlcolor=blue!70!black
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
 }
 
-% ========= 定理环境 =========
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{corollary}[theorem]{Corollary}
-
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{assumption}[theorem]{Assumption}
-\newtheorem{example}[theorem]{Example}
-
-\theoremstyle{remark}
-\newtheorem{remark}[theorem]{Remark}
-
-% ========= 常用宏 =========
-
-% 向量和范数
+% ===============================
+% Custom Commands
+% ===============================
 \newcommand{\R}{\mathbb{R}}
-\newcommand{\Rn}{\mathbb{R}^n}
-\newcommand{\N}{\mathbb{N}}
-\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
-\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
-\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\proj}{\mathrm{proj}}
+\newcommand{\cone}{\mathcal{C}}
+\newcommand{\Hil}{d_{\mathrm{H}}}
 
-% 正锥、Hilbert 度量等
-\newcommand{\cone}{\mathcal{K}}
-\newcommand{\Pcone}{\mathbb{P}(\cone)}
-\newcommand{\Hilbert}[2]{d_H\!\left(#1,#2\right)}
-\newcommand{\hilbert}{d_H}
-\newcommand{\proj}{\mathbb{P}}
-\newcommand{\Id}{\mathrm{Id}}
+% ===============================
+% Title
+% ===============================
+\title{\textbf{Note on Non-linear Perron-Frobenius dynamics in Gradient Flows via Hilbert metric}}
+\author{Xinyang (Elizabeth) Wen}
+\date{November 29, 2025}
 
-% 优化、梯度流
-\newcommand{\grad}{\nabla}
-\newcommand{\dd}{\,\mathrm{d}}
-\newcommand{\dt}{\,\mathrm{d}t}
-
-% 备注环境（写给自己看的）
-\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
-
-% ========= 文档信息 =========
-
-\title{A Preliminary Note on Hilbert's Projective Geometry in Gradient-Based Learning Dynamics}
-% 如果你想在标题下面写 “Preliminary note for Francesco Tudisco”，可以加一行小字：
-% \title{A Preliminary Note on Hilbert's Projective Geometry in Gradient-Based Learning Dynamics\\[0.3em]
-% \large Preliminary note for Francesco Tudisco}
-
-\author{Xinyang (Elizabeth) Wen\\
-\small University of Wisconsin--Madison\\
-\small \texttt{xwen57@wisc.edu}
-}
-
-\date{\today}
-
-% ========= 正文开始 =========
+% ===============================
+% Document
+% ===============================
 \begin{document}
 
 \maketitle
 
-\begin{abstract}
-This short note collects some preliminary observations on gradient-based learning dynamics viewed through the lens of Hilbert's projective metric on a positive cone. 
-In a simple gradient-descent setting with a nonnegative parametrization, we observe that the iterates exhibit a Perron--Frobenius--type behaviour: for most of training, the projective distance to the final parameter vector remains almost constant, while a sudden contraction appears in the late phase of optimization. 
-We briefly describe the experimental setup, the empirical phenomena, and some speculative connections with nonlinear Perron--Frobenius theory and cone contractions.
-\end{abstract}
 
-% ========== 1. Introduction ==========
-\section{Introduction}
+% =======================================================
+% 1. Introduction / Motivation
+% =======================================================
+\section{Motivation}
+% -------------------------------------------------------
+% Your content here.
+% Introduce the phenomenon, motivations, background.
+% -------------------------------------------------------
 
-% 这里写动机和背景，尽量简洁。
-Gradient-based methods are the workhorse of modern machine learning, yet a detailed geometric description of their trajectories remains challenging, especially in high-dimensional and nonconvex settings.
-In this note, we explore a simple but, to our knowledge, nonstandard viewpoint: we treat the parameter trajectory as living in a positive cone and measure its evolution using Hilbert's projective metric.
+My central motivation is the following:
+in many common learning problems, the data distribution naturally
+concentrates on a low-dimensional manifold,
+so naturally the gradient descent iteration can be viewed as a form of
+diffusion on this underlying specific geometric structure, depending on data. Once a loss
+functional is introduced, the diffusion acquires a preferred direction,
+and a partial order arises naturally through the loss function(Lyapunov structure).
 
-Very roughly, in models with a nonnegative parametrization (induced, for instance, by an appropriate non-linear activation and loss choice), the parameter iterates remain in a cone $\cone \subset \Rn_{>0}$ and appear to exhibit a Perron--Frobenius--type contraction in the Hilbert projective metric.
-Empirically, we observe that the Hilbert distance to the final parameter vector is nearly constant throughout most of training and collapses rapidly only in a short late phase.
+In diffusion, changing the geometry and changing the generator often produce equivalent effects on diffusion behavior (dual operations).So I initially guess it might
+behaves like a non-linear Perron-Frobenius
+system (at least in expectation).
 
-The purpose of this note is \emph{not} to provide a full theory, but rather:
-\begin{itemize}[leftmargin=*]
-    \item to specify a minimal setup where the cone structure and Hilbert geometry arise naturally;
-    \item to document the empirical contraction phenomena we observe in simple experiments (e.g., on MNIST);
-    \item to sketch some speculative connections with nonlinear Perron--Frobenius theory and Birkhoff-type contractions.
-\end{itemize}
+The purpose of this note is to record empirical observations—from Swiss Roll to MNIST
+(and SVM in the future to avoid the difficulties on MNIST)
 
-\paragraph{Acknowledgment.}
-This note is written in response to a kind email exchange with Francesco Tudisco about possible links between gradient flows and Perron--Frobenius theory.
+\section{Observation on Swiss Roll}
+\subsection{model:}
+In this section I summarize the empirical behavior observed on the
+Swiss Roll regression/classification experiments.  The task is to learn
+a smooth target function on the Swiss Roll manifold using gradient
+descent on a simple single-layer model with a nonnegative
+parametrization (linear map followed by an activation), trained with
+various loss functions.  The Swiss Roll is first embedded into a
+high-dimensional ambient space (up to dimension $4096$ in some runs), in
+order to examine the effect of dimensionality and noise on the projective 
+geometry of the parameter trajectory.
 
-% ========== 2. Setup and notation ==========
-\section{Setup and notation}
-
-In this section we outline a simple gradient-descent model with a nonnegative parametrization and fix some notation.
-
-\subsection{Positive parametrization}
-
-% 在这里写下你具体的模型假设，可以慢慢补。
-We consider a parameter vector $w_t \in \Rn$ evolving under gradient descent on a loss $L:\Rn \to \R$:
-\begin{equation}
-    w_{t+1} = w_t - \eta \grad L(w_t), \qquad t = 0,1,2,\dots,
-    \label{eq:GD}
-\end{equation}
-with a fixed step-size $\eta > 0$.
-We assume that the parametrization is such that the effective parameters remain strictly positive; for example, one can think of a map of the form
+Across all Swiss Roll experiments, the parameter trajectory exhibits a
+surprisingly consistent projective structure.  The main observations are
+as follows.
+Formulas:
 \[
-    w_t = \phi(\theta_t),
+\hat{y} = \sigma(w^\top x), 
+\qquad w \in \mathbb{R}^d,
 \]
-where $\theta_t$ are the raw weights and $\phi$ is a componentwise nonlinearity with $\phi(\R) \subset (0,\infty)$ (e.g., Softplus or a shifted exponential).
-
-\begin{assumption}[Positive cone invariance]
-\label{assumption:cone}
-There is a closed convex cone $\cone \subset \Rn$ with nonempty interior such that $w_t \in \mathrm{int}(\cone)$ for all $t \ge 0$.
-\end{assumption}
-
-In our experiments, $\cone$ is simply the standard positive cone $\R^n_{>0}$, arising from elementwise positive parametrizations of the last layer of a neural network. 
-We focus on the dynamics of $w_t$ within this cone.
-
-\subsection{Gradient flow limit}
-
-For conceptual clarity, it is sometimes convenient to consider the continuous-time gradient flow
-\begin{equation}
-    \frac{\dd}{\dt} w(t) = - \grad L(w(t)), \qquad w(0) \in \mathrm{int}(\cone),
-    \label{eq:GF}
-\end{equation}
-and view \eqref{eq:GD} as an Euler discretization.
-Our empirical observations, however, are directly based on discrete-time iterates.
-
-% ========== 3. Hilbert projective metric ==========
-\section{Hilbert's projective metric on a positive cone}
-
-We briefly recall Hilbert's projective metric and fix notation.
-We refer to standard references on cone metrics and Perron--Frobenius theory for background.
-
-\begin{definition}[Hilbert projective metric]
-Let $\cone \subset \Rn$ be a proper cone and let $x,y \in \mathrm{int}(\cone)$.
-Define
+where $\sigma$ is chosen so that $\sigma'(z)\ge 0$ for all $z$
+(e.g.\ ReLU, softplus), ensuring that the parameter dynamics remain in a
+positive cone.
+Specifically, in my experiments, the $\sigma$ is Softplus activation function : \[
+\text{Softplus}(x) = \ln\left(1 + e^x\right)
+\]
+Given a loss function $L(\hat{y}, y)$ (either squared loss or Huber
+loss), the gradient of the objective for a single data point is
 \[
-    M(x,y) := \inf \{ \alpha > 0 : x \le \alpha y \}, \qquad 
-    m(x,y) := \sup \{ \beta > 0 : \beta y \le x \},
+\nabla_w L = L'(\hat{y},y)\,\sigma'(w^\top x)\,x.
 \]
-where inequalities are with respect to the partial order induced by $\cone$.
-The \emph{Hilbert projective metric} is
+Thus each update takes the form
 \[
-    \Hilbert{x}{y} := \log \frac{M(x,y)}{m(x,y)}.
+w_{t+1}
+= w_t - \eta\, L'(\sigma(w_t^\top x), y)\,\sigma'(w_t^\top x)\,x,
 \]
-\end{definition}
+and for a batch $\{(x_i,y_i)\}$,
+\[
+w_{t+1}= w_t - \eta \sum_i 
+L'(\sigma(w_t^\top x_i), y_i)\,\sigma'(w_t^\top x_i)\,x_i.
+\]
+No kernelization or feature engineering is used; the only source of
+nonlinearity is the activation $\sigma$ and the choice of loss.  The
+positivity of $\sigma'$ ensures that the trajectory $\{w_t\}$ evolves
+inside a positive cone, which is the geometric setting relevant for
+Hilbert metric and Perron--Frobenius--type behavior.
 
-In the special case of the standard cone $\R^n_{>0}$, one has the familiar expression
-\begin{equation}
-    \Hilbert{x}{y}
-    = \log \left(
-        \frac{\max_i x_i / y_i}{\min_i x_i / y_i}
-    \right),
-    \qquad x,y \in \R^n_{>0}.
-    \label{eq:hilbert-positive-orthant}
-\end{equation}
-
-\begin{remark}[Projective nature]
-The metric $\hilbert$ is invariant under positive scaling:
-$\Hilbert{\lambda x}{\mu y} = \Hilbert{x}{y}$ for all $\lambda,\mu>0$.
-Thus it is naturally a metric on the projective space $\proj(\cone)$ of rays in $\cone$.
-\end{remark}
-
-\begin{remark}[Positive maps and contractions]
-Classical results (Birkhoff, Bushell, and many others) show that order-preserving, homogeneous maps $T:\cone \to \cone$ with bounded projective diameter are nonexpansive or even contractive in $(\proj(\cone),\hilbert)$.
-Our empirical observations suggest that late-phase gradient iterates behave \emph{approximately} in this spirit, even though the gradient map is not exactly homogeneous.
-\end{remark}
-
-% ========== 4. Empirical observations ==========
-\section{Empirical observations in gradient-based learning}
-
-In this section we summarize the empirical phenomena observed in simple experiments. 
-The precise experimental details can be refined or expanded as needed.
-
-\subsection{Experimental setup (sketch)}
-
-% TODO: 在这里写你实际用的模型、数据、参数等
-\todo{Describe the specific model (e.g., a simple fully connected network on MNIST, with a positive last layer), the loss function, optimization hyperparameters, and how $w_t$ is extracted from the network.}
-
-For each run, we:
-\begin{enumerate}[leftmargin=*]
-    \item Initialize $w_0 \in \R^n_{>0}$ (e.g., from a standard initialization mapped through a positive nonlinearity).
-    \item Train for a fixed number of steps $T$ using gradient descent or a closely related optimizer.
-    \item Save the trajectory $\{w_t\}_{t=0}^T$ of the last-layer parameters.
-    \item Compute various Hilbert distances and related quantities along the trajectory.
+\subsection{Square loss(MSE)}
+\subparagraph{\textbf{Result}:}
+\begin{enumerate}
+    \item \textbf{full batch GD}:Under small noise, with the squared loss, the Hilbert distance to the final vector decreases almost geometrically to float 0 distance to the final vector immediately after several initial steps (alignment).
+    \item \textbf{Alternating cone contraction}: Under specific condition(in my toy model it's a range depending on random seeds, embedding dimension, and Noise), the trajectory behaves like a 2-cycle contraction(The problem is I don't have a tool to analysis the period larger than 2).
+    \item \textbf{Stochastic GD}: Under Stochastic GD, the iterations converges almost linearly (in the plot, Hilbert distance to the final vector). It behaves as a Perron-Frobenius Operator under this experiment (in the meaning of float numbers).
 \end{enumerate}
 
-\subsection{Hilbert distance to the final parameter}
+\subparagraph{\textbf{Analysis(Guessing):}}
 
-Let $w^\ast := w_T$ denote the final parameter vector.
-We measure the Hilbert distance to the final point:
+\begin{enumerate}
+    \item I think the Softplus makes the whole matrix positive strictly and the Hessian matrix at the local minimum point is semi-definite. So in our model it's approximate to be a linear operator.
+    \item  It's like a period-2 contraction. Once their Birkhoff contraction ratio is closed, the leading contraction vector alternates. I verify this by tracking the largest eigenvalue during training. The data shows the largest eigenvalues decrease at 2 cycles.
+    \item I didn't find a good explanation for this so that this can also explains some interesting phenomenon in MNIST models(I haven't finished  my notes yet). The problem is this only works on square loss. When I switched to Huber loss, the stochastic GD cannot guarantee this. Another weird thing is on MNIST with neuron network with hidden layers model, the full-batch can guarantee non-expansion while this disappears under stochastic GD.
+\end{enumerate}
+
+\subsection{Huber loss.(Full-Batch GD)}
+Huber loss
 \[
-    h_t := \Hilbert{w_t}{w^\ast}, \qquad t = 0,1,\dots,T.
+L_\delta(a)=
+\begin{cases}
+\frac{1}{2}a^2, & |a|\le\delta,\\[3pt]
+\delta(|a|-\frac{\delta}{2}), & |a|>\delta,
+\end{cases} \quad  a = y - \hat{y}.
 \]
+\subparagraph{\textbf{Result:}}
+\begin{enumerate}
+    \item \textbf{full batch GD}: \ The Hilbert trajectory shows a two-stage pattern under small noise after 3-5 initial iteration: an initial
+almost-arithmetic decrease, followed by near-geometric contraction.  This mirrors the linear-to-quadratic transition in the loss itself.
+    \item \textbf{Alternating cone contraction}:The periodic-like trajectory appears more on the Huber loss models, even I increase the batch size to 4096.
+    \item \textbf{Stochastic GD}: The Stochastic GD significantly smooth the alternating cone contraction, but it's almost impossible to see a non-expansive phenomenon on Hilbert metric. 
+\end{enumerate}
+\subparagraph{\textbf{Analysis:}}
+\begin{enumerate}
+    \item \textbf{Linear}: after several initial vectors, since the difference between the predict y is not very closed to the exact y. Under Huber loss, the gradient becomes sign-like → update behaves like a piecewise positive, non-smooth cone map with no global Hessian.
+    
+    \textbf{MSE}:when the loss is closed, according to the formula of Huber loss, the loss function is closed to the MSE loss.
+    \item I think it's because the Huber loss is piecewise, so the two parts has different eigenvector, as a result it switches cones frequently during the training.(with similar contraction ration I guess?)
+    \item \textbf{more smooth} The stochastic GD introduces more noise so it might weaken the deterministic of the 2-cycle. 
+    
+    \textbf{Fail restore non-expansion} I think it's because the noise is not enough to restores the difference between the two cycles led by the formula of Huber loss
+\end{enumerate}
+\section{Current observations on MNIST models }
+\textbf{I haven't organized this part very well yet }
 
-\paragraph{Qualitative behaviour.}
-Empirically, we observe the following striking pattern:
-\begin{itemize}[leftmargin=*]
-    \item For a large portion of the training trajectory, the sequence $(h_t)$ is almost flat:
-    \[
-        h_{t+1} \approx h_t, \quad \frac{h_{t+1}}{h_t} \approx 1,
-    \]
-    indicating that the \emph{projective direction} of $w_t$ relative to $w^\ast$ remains essentially unchanged.
-    \item In a relatively short final phase, $h_t$ collapses rapidly to $0$, corresponding to $w_t$ aligning with the ray spanned by $w^\ast$ in the cone.
-\end{itemize}
+For MNIST, I use a standard $L$-layer fully-connected network with ReLU
+activations and cross-entropy loss (regularization and other settings follow
+standard practice).  The goal is again to monitor the last-layer trajectory in
+the Hilbert metric.
 
-% TODO: 你可以在这里插入图
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[width=0.6\textwidth]{hilbert_to_final_example.pdf}
-%     \caption{Example of Hilbert distance to the final parameter $w^\ast$ along training.}
-%     \label{fig:hilbert-to-final}
-% \end{figure}
+\paragraph{(1) Stepwise behavior.}
+Both full-batch and stochastic gradient descent show a characteristic
+``plateau--drop''  pattern: long regions where the Hilbert distance stays almost
+constant, followed by sudden drops over a short steps.
 
-\subsection{Between-step distances and direction freezing}
+\paragraph{(2) Effect of depth.}
+Increasing network depth makes the drops larger and the plateaus longer.
+In full-batch training this effect is especially clear.
 
-We also consider the between-step Hilbert distances
-\[
-    b_t := \Hilbert{w_t}{w_{t+1}},
-\]
-and Euclidean or cosine distances for comparison.
+\paragraph{Summary}
+These observations are preliminary; I am still organizing the experiments and
+will provide a more complete analysis later.
 
-% T
+\end{document}
