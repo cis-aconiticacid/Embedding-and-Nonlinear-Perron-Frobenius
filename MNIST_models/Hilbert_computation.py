@@ -265,7 +265,7 @@ class hilbert_computation():
             "mask": mask,
         }
 
-
+@staticmethod
 # Backward-compatible module-level wrappers (expected by graph_print_analysis).
 def analysis_distance_on_cone(
     param_traj: "Sequence[torch.Tensor]",
@@ -285,7 +285,7 @@ def analysis_distance_on_cone(
         if_self_adaptive=if_self_adaptive,
         device=device,
     )
-
+@staticmethod
 
 def compute_hilbert_to_w_star(
     trajectory: "Sequence[torch.Tensor]",
@@ -306,7 +306,7 @@ def compute_hilbert_to_w_star(
         device=device,
     )
 
-
+@staticmethod
 def compute_hilbert_between_steps(
     trajectory: "Sequence[torch.Tensor]",
     threshold: Optional[float] = None,
