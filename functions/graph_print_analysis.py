@@ -71,7 +71,6 @@ def plot_hb(
     if_smooth=True,
     smooth_window=50,
     max_points=1000,
-    if_save=True,
     plt_title="Hilbert Metric over Steps",
     saved_name="hilbert_plot.png",
     saved_path=".",
@@ -84,7 +83,6 @@ def plot_hb(
         if_smooth: Whether to smooth the curve with a moving average.
         smooth_window: Window size for smoothing.
         max_points: Maximum number of points to keep after downsampling.
-        if_save: Whether to save the plot.
         saved_name: File name for saving.
         saved_path: Directory for saving (relative path is supported).
         if_show: Whether to call ``plt.show`` after plotting.
@@ -110,7 +108,7 @@ def plot_hb(
     plt.tight_layout()
 
     save_dir = Path(saved_path)
-    if if_save:
+    if saved_path is not None:
         save_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_dir / saved_name)
 
@@ -123,9 +121,8 @@ def plot_hb(
 def write_stats(
     values,
     if_print=False,
-    if_save=True,
     saved_name="hilbert_stats.txt",
-    saved_path=".",
+    saved_path=None,
 ):
     """Write statistics for a Hilbert metric sequence.
 
@@ -158,7 +155,7 @@ def write_stats(
     if if_print:
         print(report)
 
-    if if_save:
+    if saved_path is not None:
         save_dir = Path(saved_path)
         save_dir.mkdir(parents=True, exist_ok=True)
         with open(save_dir / saved_name, "w", encoding="utf-8") as f:
@@ -190,9 +187,8 @@ def analysis_to_w_star(
     if_smooth=True,
     plt_title="Hilbert to w*",
     if_show=False,
-    if_save=True,
     save_name="analysis_to_w_star",
-    saved_path=".",
+    saved_path=None,
     if_masked=True,
     if_unmasked=True,
     threshold=1e-10,
@@ -206,7 +202,6 @@ def analysis_to_w_star(
         if_smooth: Whether to smooth the plotted curve.
         plt_title: Title for the plot.
         if_show: Whether to show the plot.
-        if_save: Whether to save the plot and statistics.
         save_name: Base name for saved files.
         saved_path: Directory to save files.
         if_masked: Whether to compute masked analysis.
@@ -242,7 +237,7 @@ def analysis_to_w_star(
                 if_print=if_print,
             )
 
-        if if_save:
+        if saved_path is not None:
             with open(save_dir / f"{save_name}_to_w_star.json", "w", encoding="utf-8") as jf:
                 json.dump(unmasked, jf, ensure_ascii=False)
 
@@ -272,7 +267,7 @@ def analysis_to_w_star(
                 if_print=if_print,
             )
 
-        if if_save:
+        if saved_path is not None:
             with open(
                 save_dir / f"{save_name}_to_w_star_masked.json",
                 "w",
@@ -288,9 +283,8 @@ def analysis_to_w_between(
     if_writes,
     if_print,
     plt_title="Hilbert Between Steps",
-    if_save=True,
     save_name="analysis_between",
-    saved_path=".",
+    saved_path=None,
     if_show=False,
     threshold=1e-10,
     if_masked=True,
@@ -329,7 +323,7 @@ def analysis_to_w_between(
             saved_path=save_dir,if_print=if_print,
         )
 
-    if if_save:
+    if saved_path is not None:
         with open(save_dir / f"{save_name}_between.json", "w", encoding="utf-8") as jf:
             json.dump(unmasked_between, jf, ensure_ascii=False)
 
@@ -359,7 +353,7 @@ def analysis_to_w_between(
                 if_print=if_print,
             )
 
-        if if_save:
+        if saved_path is not None:
             with open(
                 save_dir / f"{save_name}_between_masked.json",
                 "w",
@@ -418,7 +412,7 @@ def analysis(
     between_results = analysis_to_w_between(
         param_traj,
         if_writes=True,
-        if_save=True,
+        saved_path=result_dir,
         if_print=False,
         save_name=name,
         saved_path=result_dir,
@@ -435,7 +429,7 @@ def analysis(
         w_star,
         if_writes=True,
         if_print=False,
-        if_save=True,
+        saved_path=result_dir,
         save_name=name,
         saved_path=result_dir,
         if_show=False,
