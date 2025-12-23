@@ -73,7 +73,7 @@ def plot_hb(
     max_points=1000,
     plt_title="Hilbert Metric over Steps",
     saved_name="hilbert_plot.png",
-    saved_path=".",
+    saved_path=None,
     if_show=False,
 ):
     """Plot Hilbert metrics with optional smoothing and saving.
@@ -107,8 +107,8 @@ def plot_hb(
     plt.axhline(1.0, linestyle="--", linewidth=1)
     plt.tight_layout()
 
-    save_dir = Path(saved_path)
     if saved_path is not None:
+        save_dir = Path(saved_path)
         save_dir.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_dir / saved_name)
 
@@ -280,8 +280,8 @@ def analysis_to_w_star(
 
 def analysis_to_w_between(
     trajectory,
-    if_writes,
-    if_print,
+    if_writes=True,
+    if_print=False,
     plt_title="Hilbert Between Steps",
     save_name="analysis_between",
     saved_path=None,
@@ -292,11 +292,12 @@ def analysis_to_w_between(
     if_smooth=True,
 ):
     """Analyze Hilbert distances between consecutive trajectory steps."""
-
+    if saved_path is not None:
+        save_dir = Path(saved_path)
+        save_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        save_dir=None
     results = {}
-    save_dir = Path(saved_path)
-    save_dir.mkdir(parents=True, exist_ok=True)
-
     unmasked_between = hc.compute_hilbert_between_steps(
         trajectory,
         threshold=threshold,
@@ -310,7 +311,7 @@ def analysis_to_w_between(
         plot_hb(
             unmasked_between,
             saved_name=f"{save_name}_between.png",
-            saved_path=save_dir,
+            saved_path=save_dir ,
             plt_title=f"{plt_title} (Unmasked)",
             if_show=if_show,
             if_smooth=if_smooth,
@@ -415,7 +416,6 @@ def analysis(
         saved_path=result_dir,
         if_print=False,
         save_name=name,
-        saved_path=result_dir,
         if_show=False,
         threshold=threshold,
         if_masked=if_mask,
@@ -431,7 +431,6 @@ def analysis(
         if_print=False,
         saved_path=result_dir,
         save_name=name,
-        saved_path=result_dir,
         if_show=False,
         if_masked=if_mask,
         if_unmasked=True,

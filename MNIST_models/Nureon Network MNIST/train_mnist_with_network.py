@@ -61,7 +61,8 @@ class HBModel_MNIST:
         huber_beta: float = 1.0,
         regularization_coeff: float = 1e-4,
         if_regularize_all: bool = False,
-        trajectory_save_path: Optional[str] = None,
+        save_path: Optional[str] = None,
+        save_name: Optional[str] = None,
         seed: Optional[int] = 42,
     ) -> Dict[str, Any]:
         """
@@ -80,7 +81,7 @@ class HBModel_MNIST:
             huber_beta (float): Beta parameter for SmoothL1 loss when loss_type=huber.
             regularization_coeff (float): Weight decay coefficient when regularization is enabled.
             if_regularize_all (bool): When True, apply regularization to all parameters; otherwise only the output layer.
-            trajectory_save_path (Optional[str]): Absolute path to save the parameter trajectory; when None, do not save.
+            save_path (Optional[str]): Absolute path to save the parameter trajectory; when None, do not save.
             seed (Optional[int]): Random seed for reproducibility; when None, leave the current RNG state unchanged.
 
         Returns:
@@ -256,11 +257,12 @@ class HBModel_MNIST:
         # =======================
         # w_star = param_traj[-1]
 
-        if trajectory_save_path is not None:
-            traj_path = Path(trajectory_save_path)
+        if save_path is not None:
+            traj_path = Path(save_path)
             if not traj_path.is_absolute():
-                raise ValueError("trajectory_save_path must be an absolute path.")
+                raise ValueError("save_path must be an absolute path.")
             traj_path.parent.mkdir(parents=True, exist_ok=True)
+            
             torch.save(param_traj, traj_path)
             output_log += f"Trajectory saved to {traj_path}\n"
 
