@@ -16,7 +16,7 @@ History:
 import torch
 class distance_func:
     @staticmethod
-    def hilbert_distance(x, y, eps=1e-10):
+    def hilbert_distance(x, y, eps=1e-10,if_clamp=False):
         """
         x, y: (m,) positive (>0)
         d_H(x, y) = log( max_i x_i / y_i ) - log( min_i x_i / y_i )
@@ -31,8 +31,12 @@ class distance_func:
         x = x.view(-1)
         y = y.view(-1)
 
-        if (x < eps).any() or (y < eps).any():
-            raise ValueError("Inputs to hilbert_distance must be strictly positive.")
+        if if_clamp:
+            x = torch.clamp(x, min=eps)
+            y = torch.clamp(y, min=eps)
+        else:
+            if (x < eps).any() or (y < eps).any():
+                raise ValueError("Inputs to hilbert_distance must be strictly positive.")
 
         ratio = x / y
         max_r = ratio.max()
@@ -143,9 +147,12 @@ class hilbert_computation():
     @staticmethod
     def _hilbert_distances_to_target(ref_traj: torch.Tensor, target: torch.Tensor) -> List[float]:
         ratio = ref_traj / target  # broadcast (T,D) / (D,)
-        max_r, _ = ratio.max(dim=1)  # (T,)
-        min_r, _ = ratio.min(dim=1)
-        return (max_r.log() - min_r.log()).tolist()
+        max_r,max_index  = ratio.max(dim=1)  # (T,)
+        min_r,min_index = ratio.min(dim=1)
+        return {(max_r.log() - min_r.log()).tolist(),
+                min_index.tolist(),
+                max_index.tolist()
+                }
 
     @staticmethod
     def _hilbert_distances_between_consecutive(ref_traj: torch.Tensor) -> List[float]:
@@ -171,8 +178,11 @@ class hilbert_computation():
         ref_traj, _, w_star_new, _, _, _ = hilbert_computation._prepare_trajectory(
             trajectory, w_star, threshold, ifmask, if_threshold, if_self_adaptive, device
         )
-        return hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
-
+        distances,max_indexs,min_indexs=hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
+        return {distances,  
+        max_indexs,
+        min_indexs}
+    
     @staticmethod
     def compute_hilbert_between_steps(
         trajectory: "Sequence[torch.Tensor]",
@@ -252,9 +262,9 @@ class hilbert_computation():
 
         T, _ = ref_traj.shape
 
-        hilbert_to_final = hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
-        hilbert_to_init = hilbert_computation._hilbert_distances_to_target(ref_traj, w_init)
-        hilbert_between = hilbert_computation._hilbert_distances_between_consecutive(ref_traj)
+        hilbert_to_final,_,_ = hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
+        hilbert_to_init,_,_ = hilbert_computation._hilbert_distances_to_target(ref_traj, w_init)
+        hilbert_between,_,_ = hilbert_computation._hilbert_distances_between_consecutive(ref_traj)
 
         return {
             "hilbert_to_final": hilbert_to_final,
