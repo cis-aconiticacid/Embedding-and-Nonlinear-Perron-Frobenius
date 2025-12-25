@@ -212,9 +212,11 @@ def analysis_to_w_star(
     """
 
     results = {}
-    save_dir = Path(saved_path)
-    save_dir.mkdir(parents=True, exist_ok=True)
-
+    if saved_path is not None:
+        save_dir = Path(saved_path)
+        save_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        save_dir=None
     if if_unmasked:
         unmasked = _hilbert_to_target_sequence(trajectory, w_star)
         results["hilbert_to_w_star"] = unmasked

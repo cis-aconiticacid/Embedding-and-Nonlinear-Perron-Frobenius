@@ -49,7 +49,7 @@ class HBModel_MNIST:
 
 
     def train_mnist_with_hilbert(
-        number_of_layerss: int = 1,
+        number_of_layers: int = 1,
         num_epochs: Optional[int] = None,      
         max_steps: Optional[int] = None,       
         batch_size: int = 128,
@@ -96,7 +96,7 @@ class HBModel_MNIST:
             raise ValueError("必须在 num_epochs 和 max_steps 里至少指定一个。")
         if (num_epochs is not None) and (max_steps is not None):
             raise ValueError("只能二选一：要么用 num_epochs，要么用 max_steps。")
-        if number_of_layerss < 1:
+        if number_of_layers < 1:
             raise ValueError("number_of_layerss must be at least 1.")
 
         output_log = ""
@@ -133,7 +133,7 @@ class HBModel_MNIST:
             pin_memory=True,    # 加速 CPU→GPU 拷贝
         )
 
-        model = MNISTNet(number_of_layerss=number_of_layerss).to(device)
+        model = MNISTNet(number_of_layerss=number_of_layers).to(device)
 
         # 根据 loss_type 选择不同的 criterion
         if loss_type == "ce":
