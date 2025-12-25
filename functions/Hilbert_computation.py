@@ -149,10 +149,10 @@ class hilbert_computation():
         ratio = ref_traj / target  # broadcast (T,D) / (D,)
         max_r,max_index  = ratio.max(dim=1)  # (T,)
         min_r,min_index = ratio.min(dim=1)
-        return {(max_r.log() - min_r.log()).tolist(),
+        return ((max_r.log() - min_r.log()).tolist(),
                 min_index.tolist(),
                 max_index.tolist()
-                }
+        )
 
     @staticmethod
     def _hilbert_distances_between_consecutive(ref_traj: torch.Tensor) -> List[float]:
@@ -179,9 +179,9 @@ class hilbert_computation():
             trajectory, w_star, threshold, ifmask, if_threshold, if_self_adaptive, device
         )
         distances,max_indexs,min_indexs=hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
-        return {distances,  
+        return (distances,  
         max_indexs,
-        min_indexs}
+        min_indexs)
     
     @staticmethod
     def compute_hilbert_between_steps(

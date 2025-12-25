@@ -164,7 +164,8 @@ class HBModel_MNIST:
         # ---- 用于存储参数轨迹（最后一层 output_layer.weight 的真实向量）----
         # 不做任何 abs / eps / mask / threshold 处理，全部留到外部分析函数统一处理
         param_traj = []
-
+        loss_traj = []
+        
         # 先记录初始权重 w_0
         with torch.no_grad():
             w0 = model.output_layer.weight.detach().cpu().reshape(-1).clone()
@@ -220,6 +221,7 @@ class HBModel_MNIST:
                     elif loss_type == "mse":
                         # 纯 MSE 版本
                         loss = criterion(logits, target_onehot)
+                loss_traj.append(loss.item())
                 loss.backward()
                 optimizer.step()
 
@@ -258,12 +260,14 @@ class HBModel_MNIST:
         # w_star = param_traj[-1]
 
         if save_path is not None:
-            traj_path = Path(save_path)
+            traj_path = Path(save_path) / 'param_trajectory.pt'
+            loss_path = Path(save_path) / 'loss_trajectory.pt'
             if not traj_path.is_absolute():
                 raise ValueError("save_path must be an absolute path.")
             traj_path.parent.mkdir(parents=True, exist_ok=True)
             
             torch.save(param_traj, traj_path)
+            torch.save(loss_traj, loss_path)
             output_log += f"Trajectory saved to {traj_path}\n"
 
         # 统一交给外部 analysis(...) 去做 Hilbert / mask / threshold 等等
@@ -274,6 +278,7 @@ class HBModel_MNIST:
             "batch_size": batch_size,
             "lr": lr,
             "epochs_or_steps": f"steps{max_steps}" if max_steps is not None else f"ep{num_epochs}",
+            "loss_traj": loss_traj,
         }
 
     @staticmethod
