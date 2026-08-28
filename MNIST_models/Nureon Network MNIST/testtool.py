@@ -6,8 +6,8 @@ from pathlib import Path
 import os
 _old_sys_path = sys.path.copy()
 try:
-    project_root = Path.cwd().parent.parent
-    sys.path.insert(0, str(project_root / "src"))
+    project_root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(project_root))
     from functions import graph_print_analysis as gp_tool
 
 finally:
@@ -56,8 +56,8 @@ def analysis(param_traj, output_log, batch_size, lr, num_epochs=None,
     # ============================
     # 1. 计算 ratio（保留你原来的逻辑）
     # ============================
-    hilbert_to_final = gp_tool.analysis_to_w_star(trajectory=param_traj, w_star=param_traj[-1], if_writes=False, if_print=False)
-    hilbert_between = gp_tool.analysis_to_w_between(trajectory=param_traj,if_writes=False,if_print=False)
+    hilbert_to_final = gp_tool.analysis_to_w_star(trajectory=param_traj, w_star=param_traj[-1], if_writes=False, if_print=False).get("hilbert_to_w_star", [])
+    hilbert_between = gp_tool.analysis_to_w_between(trajectory=param_traj,if_writes=False,if_print=False).get("hilbert_between", [])
     ratios_to_final = []
     ratios_between = []
     for t in range(len(hilbert_to_final) - 1):
@@ -176,8 +176,8 @@ def analysis(param_traj, output_log, batch_size, lr, num_epochs=None,
     # 5. Masked Cone 分析（完全保留）
 
     f.write("===== Masked Cone Analysis Results =====\n")
-    hilbert_to_final2 = gp_tool.analysis_to_w_star(trajectory=para_traj2, w_star=w_star_raw, if_writes=False, if_print=False)   
-    hilbert_between2 = gp_tool.analysis_to_w_between(trajectory=para_traj2, if_writes=False, if_print=False)
+    hilbert_to_final2 = gp_tool.analysis_to_w_star(trajectory=para_traj2, w_star=w_star_raw, if_writes=False, if_print=False).get("hilbert_to_w_star_masked", [])
+    hilbert_between2 = gp_tool.analysis_to_w_between(trajectory=para_traj2, if_writes=False, if_print=False).get("hilbert_between_masked", [])
 
     ratios_to_final2 = []
     for t in range(len(hilbert_to_final2) - 1):

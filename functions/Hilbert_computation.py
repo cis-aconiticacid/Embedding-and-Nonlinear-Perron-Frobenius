@@ -264,7 +264,7 @@ class hilbert_computation():
 
         hilbert_to_final,_,_ = hilbert_computation._hilbert_distances_to_target(ref_traj, w_star_new)
         hilbert_to_init,_,_ = hilbert_computation._hilbert_distances_to_target(ref_traj, w_init)
-        hilbert_between,_,_ = hilbert_computation._hilbert_distances_between_consecutive(ref_traj)
+        hilbert_between = hilbert_computation._hilbert_distances_between_consecutive(ref_traj)
 
         return {
             "hilbert_to_final": hilbert_to_final,
@@ -275,61 +275,3 @@ class hilbert_computation():
             "mask": mask,
         }
 
-@staticmethod
-# Backward-compatible module-level wrappers (expected by graph_print_analysis).
-def analysis_distance_on_cone(
-    param_traj: "Sequence[torch.Tensor]",
-    w_star: torch.Tensor,
-    threshold: Optional[float] = None,
-    ifmask: bool = False,
-    if_threshold: bool = False,
-    if_self_adaptive: bool = False,
-    device: str = "cuda",
-) -> Dict[str, object]:
-    return hilbert_computation.analysis_distance_on_cone(
-        param_traj=param_traj,
-        w_star=w_star,
-        threshold=threshold,
-        ifmask=ifmask,
-        if_threshold=if_threshold,
-        if_self_adaptive=if_self_adaptive,
-        device=device,
-    )
-@staticmethod
-
-def compute_hilbert_to_w_star(
-    trajectory: "Sequence[torch.Tensor]",
-    w_star: torch.Tensor,
-    threshold: Optional[float] = None,
-    ifmask: bool = False,
-    if_self_adaptive: bool = False,
-    if_threshold: bool = False,
-    device: str = "cuda",
-) -> List[float]:
-    return hilbert_computation.compute_hilbert_to_w_star(
-        trajectory,
-        w_star,
-        threshold=threshold,
-        ifmask=ifmask,
-        if_self_adaptive=if_self_adaptive,
-        if_threshold=if_threshold,
-        device=device,
-    )
-
-@staticmethod
-def compute_hilbert_between_steps(
-    trajectory: "Sequence[torch.Tensor]",
-    threshold: Optional[float] = None,
-    ifmask: bool = False,
-    if_self_adaptive: bool = False,
-    if_threshold: bool = False,
-    device: str = "cuda",
-) -> List[float]:
-    return hilbert_computation.compute_hilbert_between_steps(
-        trajectory,
-        threshold=threshold,
-        ifmask=ifmask,
-        if_self_adaptive=if_self_adaptive,
-        if_threshold=if_threshold,
-        device=device,
-    )

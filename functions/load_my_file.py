@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # from MNIST_models.graph_print_analysis import moving_average_xy
 
 # ====== 配置 ======
-BASE_DIR = Path(r"C:\Users\ASUS\Desktop\cone_dynamics\MNIST_models\analysis_resul")
+BASE_DIR = Path(__file__).resolve().parents[1] / "MNIST_models" / "Nureon Network MNIST" / "analysis_result"
 
 batch_sizes = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
 num_epochs = [1, 2, 3, 4, 5, 6]

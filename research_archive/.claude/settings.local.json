@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf /workspace/gradient_dsen_neuron_network/refine-logs/runs/Spectral/*)",
+      "Bash(python3 spectral_dynamics.py --depth 3 --seeds 0 1 2 --steps 5000)",
+      "Bash(echo \"PID: $!\")"
+    ]
+  }
+}
